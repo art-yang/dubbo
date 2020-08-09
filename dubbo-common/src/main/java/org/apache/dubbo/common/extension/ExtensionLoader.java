@@ -127,7 +127,13 @@ public class ExtensionLoader<T> {
      */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<>();
 
+    /**
+     * cachedAdaptiveInstance
+     */
     private final Holder<Object> cachedAdaptiveInstance = new Holder<>();
+    /**
+     * cachedAdaptiveClass
+     */
     private volatile Class<?> cachedAdaptiveClass = null;
 
     /**
@@ -640,7 +646,9 @@ public class ExtensionLoader<T> {
                 instance = cachedAdaptiveInstance.get();
                 if (instance == null) {
                     try {
+                        // 创建AdaptiveExtension实例
                         instance = createAdaptiveExtension();
+                        // 放入cachedAdaptiveInstance缓存
                         cachedAdaptiveInstance.set(instance);
                     } catch (Throwable t) {
                         createAdaptiveInstanceError = t;
@@ -700,19 +708,22 @@ public class ExtensionLoader<T> {
 
             // 自动包装扩展对象
             if (wrap) {
-
+                // 包装类List
                 List<Class<?>> wrapperClassesList = new ArrayList<>();
                 if (cachedWrapperClasses != null) {
+                    // 加上缓存的包装类
                     wrapperClassesList.addAll(cachedWrapperClasses);
                     wrapperClassesList.sort(WrapperComparator.COMPARATOR);
                     Collections.reverse(wrapperClassesList);
                 }
 
+                // 遍历全部包装类
                 if (CollectionUtils.isNotEmpty(wrapperClassesList)) {
                     for (Class<?> wrapperClass : wrapperClassesList) {
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);
                         if (wrapper == null
                                 || (ArrayUtils.contains(wrapper.matches(), name) && !ArrayUtils.contains(wrapper.mismatches(), name))) {
+                            // 自动装配扩展实现类中的属性 包装到真正的扩展实例对象外层
                             instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                         }
                     }
@@ -735,6 +746,7 @@ public class ExtensionLoader<T> {
 
     private T injectExtension(T instance) {
 
+        // 检测objectFactory字段
         if (objectFactory == null) {
             return instance;
         }
@@ -742,23 +754,29 @@ public class ExtensionLoader<T> {
         try {
             for (Method method : instance.getClass().getMethods()) {
                 if (!isSetter(method)) {
+                    // 如果不是set方法，忽略该方法
                     continue;
                 }
                 /**
                  * Check {@link DisableInject} to see if we need auto injection for this property
                  */
                 if (method.getAnnotation(DisableInject.class) != null) {
+                    // 如果方法上明确标注了@DisableInject注解，忽略该方法
                     continue;
                 }
                 Class<?> pt = method.getParameterTypes()[0];
                 if (ReflectUtils.isPrimitives(pt)) {
+                    // 如果方法参数类型是基本数据类型，忽略该方法
                     continue;
                 }
 
                 try {
+                    // 根据setter方法的名称确定属性名称
                     String property = getSetterProperty(method);
+                    // 加载并实例化扩展实现类
                     Object object = objectFactory.getExtension(pt, property);
                     if (object != null) {
+                        // 调用set方法填充扩展对象
                         method.invoke(instance, object);
                     }
                 } catch (Exception e) {
@@ -903,6 +921,7 @@ public class ExtensionLoader<T> {
             if (urls != null) {
                 while (urls.hasMoreElements()) {
                     java.net.URL resourceURL = urls.nextElement();
+                    // loadResource
                     loadResource(extensionClasses, classLoader, resourceURL, overridden, excludedPackages);
                 }
             }
@@ -932,6 +951,7 @@ public class ExtensionLoader<T> {
                                 line = line.substring(i + 1).trim();
                             }
                             if (line.length() > 0 && !isExcluded(line, excludedPackages)) {
+                                // loadClass
                                 loadClass(extensionClasses, resourceURL, Class.forName(line, true, classLoader), name, overridden);
                             }
                         } catch (Throwable t) {
@@ -966,8 +986,10 @@ public class ExtensionLoader<T> {
                     + clazz.getName() + " is not subtype of interface.");
         }
         if (clazz.isAnnotationPresent(Adaptive.class)) {
+            // 缓存适配器类
             cacheAdaptiveClass(clazz, overridden);
         } else if (isWrapperClass(clazz)) {
+            // 缓存包装类
             cacheWrapperClass(clazz);
         } else {
             clazz.getConstructor();
@@ -1086,6 +1108,7 @@ public class ExtensionLoader<T> {
     @SuppressWarnings("unchecked")
     private T createAdaptiveExtension() {
         try {
+            // 创建适配器类实例，并进行自动装配
             return injectExtension((T) getAdaptiveExtensionClass().newInstance());
         } catch (Exception e) {
             throw new IllegalStateException("Can't create adaptive extension " + type + ", cause: " + e.getMessage(), e);
@@ -1093,10 +1116,12 @@ public class ExtensionLoader<T> {
     }
 
     private Class<?> getAdaptiveExtensionClass() {
+        //  触发 loadClass() 方法，完成 cachedAdaptiveClass 字段的填充。
         getExtensionClasses();
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
+        // 创建适配器类
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 

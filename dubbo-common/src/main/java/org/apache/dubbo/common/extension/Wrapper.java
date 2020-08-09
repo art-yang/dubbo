@@ -22,11 +22,13 @@ package org.apache.dubbo.common.extension;
 public @interface Wrapper {
 
     /**
+     * 需要包装的扩展名
      * the extension names that need to be wrapped.
      */
     String[] matches() default {};
 
     /**
+     * 需要排除的扩展名
      * the extension names that need to be excluded.
      */
     String[] mismatches() default {};
