@@ -18,14 +18,26 @@ package org.apache.dubbo.common.extension;
 
 import org.apache.dubbo.common.lang.Prioritized;
 
+/**
+ * 加载策略接口
+ */
 public interface LoadingStrategy extends Prioritized {
 
+    /**
+     * 获取加载文件路径
+     *
+     * @return 加载文件夹路径
+     */
     String directory();
 
     default boolean preferExtensionClassLoader() {
         return false;
     }
 
+    /**
+     * 排除的包
+     * @return
+     */
     default String[] excludedPackages() {
         return null;
     }

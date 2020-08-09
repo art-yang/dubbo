@@ -30,6 +30,7 @@ public class DubboInternalLoadingStrategy implements LoadingStrategy {
 
     @Override
     public int getPriority() {
+        // 最高优先级
         return MAX_PRIORITY;
     }
 }

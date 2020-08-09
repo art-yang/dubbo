@@ -35,6 +35,7 @@ public class DubboLoadingStrategy implements LoadingStrategy {
 
     @Override
     public int getPriority() {
+        // 正常优先级
         return NORMAL_PRIORITY;
     }
 
