@@ -44,6 +44,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Activate {
     /**
+     * 修饰的实现类是在 Provider 端被激活还是在 Consumer 端被激活。
      * Activate the current extension when one of the groups matches. The group passed into
      * {@link ExtensionLoader#getActivateExtension(URL, String, String)} will be used for matching.
      *
@@ -53,6 +54,7 @@ public @interface Activate {
     String[] group() default {};
 
     /**
+     * 修饰的实现类只在 URL 参数中出现指定的 key 时才会被激活。
      * Activate the current extension when the specified keys appear in the URL's parameters.
      * <p>
      * For example, given <code>@Activate("cache, validation")</code>, the current extension will be return only when
@@ -84,6 +86,7 @@ public @interface Activate {
     String[] after() default {};
 
     /**
+     * 用来确定扩展实现类的排序。
      * Absolute ordering info, optional
      *
      * @return absolute ordering info
